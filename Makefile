@@ -1,4 +1,4 @@
-all: md5 vista
+all: md5 vista slave
 
 md5: md5.c
 	gcc -Wall -std=c99 $< -o $@
@@ -6,8 +6,11 @@ md5: md5.c
 vista: vista.c
 	gcc -Wall -std=c99 $< -o $@
 
+slave: slave.c
+	gcc -Wall -std=c99 $< -o $@
+
 clean:
-	rm -f md5 vista
+	rm -f md5 vista slave
 
 .PHONY: all clean
 

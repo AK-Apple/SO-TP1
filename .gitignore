@@ -1,6 +1,7 @@
 # archivos .out
 md5
 vista
+slave
 *.out
 
 .bash_history
