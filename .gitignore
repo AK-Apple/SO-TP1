@@ -1,0 +1,6 @@
+# archivos .out
+md5
+vista
+*.out
+
+.bash_history
