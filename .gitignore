@@ -4,3 +4,4 @@ vista
 *.out
 
 .bash_history
+.DS_Store
