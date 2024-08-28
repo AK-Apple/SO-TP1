@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
 
     char message[100];
     for(int i=0; i < SLAVE_COUNT; i++){
-        sprintf(message, "Mensaje numero %d\n", i);
+        // sprintf(message, "Mensaje numero %d\n", i);
+        sprintf(message, "vista.c");
 
         write(write_pipefd[i][1], message, strlen(message));
     }
@@ -77,6 +78,7 @@ int main(int argc, char *argv[]) {
         read(read_pipefd[i][0], buffer, sizeof(buffer));
         printf(buffer);
     }
+
 
 
     // 6. termina todo

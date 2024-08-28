@@ -6,6 +6,11 @@ int main()
 {
     printf("slave\n");
 
+// 1. get char hasta /n para leer el path de un archivo
+// 2. abrir el archivo
+// 3. leer el archivo
+// 4. calcular el hash md5 del archivo
+// 5. enviar el hash md5 al master, es decir, imprimirlo
 // ------------- Créditos: ChatGPT ------------------ //
 
     char c;
@@ -19,7 +24,24 @@ int main()
     }
     input[i] = '\0';  // Null-terminate the string
 
-    //Los esclavos imprimen al master con printf
+    // Open the file
+    FILE *file = fopen(input, "rb");
+    if (file == NULL) {
+        printf("Error: Unable to open file '%s'\n", input);
+        exit(1);
+    }
+
+    // Read and print the content of the file
+    int ch;
+    while ((ch = fgetc(file)) != EOF) {
+        putchar(ch);
+    }
+
+    // close the file
+    fclose(file);
+
+
+
     printf("I'm %d and my master entered: %s\n", getpid(), input);
 
 // ------------- Créditos: ChatGPT ------------------ //

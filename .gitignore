@@ -7,3 +7,6 @@ slave
 .bash_history
 .DS_Store
 .vscode
+
+.idea
+personal.c
