@@ -6,17 +6,15 @@ int main()
 {
     printf("slave\n");
 
-// 1. get char hasta /n para leer el path de un archivo
-// 2. abrir el archivo
+// 1. TODO: strtok y read para separar
+// 2. abrir un archivo
 // 3. leer el archivo
-// 4. calcular el hash md5 del archivo
+// 4. TODO: calcular el hash md5 del archivo (investigar popen(3) y md5sum(shell))
 // 5. enviar el hash md5 al master, es decir, imprimirlo
-// ------------- Créditos: ChatGPT ------------------ //
 
     char c;
     char input[100];  // Assuming input will not exceed 100 characters
     int i = 0;
-
     // Los esclavos reciben info con getchar
     while ((c = getchar()) != '\n' && i < 99) {
         input[i] = c;
@@ -43,8 +41,6 @@ int main()
 
 
     printf("I'm %d and my master entered: %s\n", getpid(), input);
-
-// ------------- Créditos: ChatGPT ------------------ //
 
     exit(0);
 }

@@ -7,10 +7,16 @@
 #include <string.h>
 
 #define SLAVE_COUNT 5
+#define INIT_DISTRIB 10  // representa un porcentaje (10%)
 
 
 void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_COUNT][2], int i);
 
+// Ejemplo:
+// Tengo 100 esclavos
+// Seteo INIT_DISTRIB = 10
+// Seteo SLAVE_COUNT = 5
+// Entonces se distribuyen 10 archivos en 5 esclavos
 
 int main(int argc, char *argv[]) {
     printf("Esto es md5.c: argcount=%d\n", argc);
@@ -58,17 +64,26 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // Escribo a esclavos
-    //    canal:    write_pipefd[i][1]
+    // Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
+    //    canal para enviar cosas al slave:    write_pipefd[i][1]
 
-    char message[100];
-    for(int i=0; i < SLAVE_COUNT; i++){
+    char message[100];  //de última lo alargamos
+    int file_it = 0;
+    int slave_it = 0;
+    int file_limit = (argc-1)*INIT_DISTRIB/100;
+
+    // TODO: Ver si hay alguna mejor forma de iterar
+    for(file_it=0; file_it < file_limit; file_it++){
+        
         // sprintf(message, "Mensaje numero %d\n", i);
-        sprintf(message, "vista.c");
+        // sprintf(message, "vista.c\n");
 
-        write(write_pipefd[i][1], message, strlen(message));
+        write(write_pipefd[slave_it][1], argv[file_it+1], strlen(argv[file_it+1]));
+        slave_it++;
+        if (slave_it==SLAVE_COUNT) slave_it = 0;
     }
 
+    // Acá iría el slave
     // Leo de esclavos
     //    canal:    read_pipefd[i][0]
 
