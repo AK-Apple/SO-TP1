@@ -4,7 +4,7 @@
 
 int main()
 {
-    printf("slave\n");
+    printf("slave no:%d\n", getpid());
 
 // 1. TODO: strtok y read para separar
 // 2. abrir un archivo
@@ -38,9 +38,7 @@ int main()
     // close the file
     fclose(file);
 
-
-
-    printf("I'm %d and my master entered: %s\n", getpid(), input);
+    // printf("I'm %d and my master entered: %s\n", getpid(), input);
 
     exit(0);
 }

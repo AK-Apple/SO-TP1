@@ -2,6 +2,7 @@
 md5
 vista
 slave
+junior_slave
 *.out
 
 .bash_history

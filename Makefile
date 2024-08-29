@@ -1,4 +1,4 @@
-all: md5 vista slave
+all: md5 vista slave junior_slave
 
 md5: md5.c
 	gcc -Wall -std=c99 $< -o $@
@@ -7,6 +7,9 @@ vista: vista.c
 	gcc -Wall -std=c99 $< -o $@
 
 slave: slave.c
+	gcc -Wall -std=c99 $< -o $@
+
+junior_slave: junior_slave.c
 	gcc -Wall -std=c99 $< -o $@
 
 clean:
