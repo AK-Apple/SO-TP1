@@ -72,57 +72,37 @@ int main(int argc, char *argv[]) {
     int written_files = 0;
     int slave_it = 0;
     int file_limit = ((argc-1)*INIT_DISTRIB)/100;
+    int local_to_read[SLAVE_COUNT] = {0};
 
-    // TODO: Ver si hay alguna mejor forma de iterar
+
     for(written_files=0; written_files < file_limit; written_files++){
         
         sprintf(message, "%s\n", argv[written_files+1]);
 
         write(write_pipefd[slave_it][1], message, strlen(message));
         printf("Enviado %s al esclavo %d\n", message, slave_it);
+        local_to_read[slave_it]++;
         slave_it++;
         if (slave_it>=SLAVE_COUNT) slave_it = 0;
     }
-    sleep(1);
+    
+    // sleep(1);
 
  
 
     int read_files = 0;
 
-// This is the main loop
-    while(written_files < argc-1){
-        printf("new cycle. Read files: %d\n", read_files);
+// ----------------------------  Start Main Loop -------------------------------
 
-        // 1. Create set of write pipes
-        fd_set write_set;
-        FD_ZERO(&write_set);
-        int max_fd = 0;
-        for(int i=0; i<SLAVE_COUNT; i++){
-            FD_SET(write_pipefd[i][1], &write_set);
-            if (write_pipefd[i][1] > max_fd) {
-                max_fd = write_pipefd[i][1];
-            }
-        }
+    while(read_files < argc-1){
+        printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
 
-        // 2. Wait and select writable pipes
-        struct timeval write_timeout = {0, 100000}; // 0.1 second timeout
-        int writable_pipes = select(max_fd + 1, NULL, &write_set, NULL, &write_timeout);
+        
 
-        // 3. Write to selected pipes
-        for(int i=0; i < SLAVE_COUNT && writable_pipes > 0 && written_files < argc-1; i++){
-            if (FD_ISSET(write_pipefd[i][1], &write_set)) {
-                sprintf(message, "%s\n", argv[written_files+1]);
-                write(write_pipefd[i][1], message, strlen(message));
-                printf("Sent %s to slave %d\n", message, i);
-                writable_pipes--;
-                written_files++;
-            }
-        }
-
-        // 4. Create set of read pipes
+        // 1. Create set of read pipes
         fd_set read_set;
         FD_ZERO(&read_set);
-        max_fd = 0;
+        int max_fd = 0;
         for(int i=0; i<SLAVE_COUNT; i++){
             FD_SET(read_pipefd[i][0], &read_set);
             if (read_pipefd[i][0] > max_fd) {
@@ -130,15 +110,12 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        struct timeval tv = {0, 100000};  // 0.1 seconds (100,000 microseconds)
-        select(0, NULL, NULL, NULL, &tv);  // Sleep for 0.1 seconds
-
-        // 5. Wait and select readable pipes
+        // 2. Wait and select readable pipes
         struct timeval read_timeout = {0, 100000}; // 0.1 second timeout
         int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, &read_timeout);
 
-        // 6. Read from selected pipes
-        char buffer[2048];
+        // 3. Iterate through readable pipes
+        char buffer[4096];
         for(int i=0; i < SLAVE_COUNT && readable_pipes > 0 && read_files < argc-1; i++){
             if (FD_ISSET(read_pipefd[i][0], &read_set)) {
                 ssize_t bytes_read = read(read_pipefd[i][0], buffer, sizeof(buffer) - 1);
@@ -147,18 +124,36 @@ int main(int argc, char *argv[]) {
 
                     char *token = strtok(buffer, "\n");
                     do{
+                        // 3.1 Reads from slave and processes info
+
+                        // --------- ¡¡¡ACÁ VIENE LO DE JAVI!!! ---------
+
                         printf("From slave %d: %s\n", i, token);
+
+                        // --------- ¡¡¡ACÁ TERMINA LO DE JAVI!!! ---------
+
                         read_files++;
-                        
+                        local_to_read[i]--;
                     } 
                     while ((token = strtok(NULL, "\n")));
                     readable_pipes--;
+
+                    // write ONLY if slave has finished processing
+                    if (local_to_read[i] == 0 && written_files < argc-1){
+                        sprintf(message, "%s\n", argv[written_files+1]);
+                        write(write_pipefd[i][1], message, strlen(message));
+                        printf("Sent %s to slave %d\n", message, i);
+                        written_files++;
+                        local_to_read[i]++;
+                    }
                 }
             }
         }
     }
 
-    sleep(1);
+// ----------------------------  End Main Loop -------------------------------
+
+    // sleep(1);
     
     // Close all pipes after processing
     for(int i=0; i<SLAVE_COUNT; i++){
