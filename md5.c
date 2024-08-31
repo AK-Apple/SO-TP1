@@ -1,7 +1,7 @@
 /* Programa: md5.c aplication */
+#include "shared_info.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <string.h>
@@ -22,7 +22,7 @@ void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_CO
 // Entonces se distribuyen 10 archivos en 5 esclavos
 
 int main(int argc, char *argv[]) {
-    printf("Esto es md5.c: argcount=%d\n", argc);
+    // printf("Esto es md5.c: argcount=%d\n", argc);
 
 
     // 1. Creo arrays de Pipes
@@ -65,6 +65,32 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // shared memory proceso vista.c
+    char *shared_memory_path = "/shared_mem";
+    printf("smhpath %s\n", shared_memory_path);
+    /* Create shared memory object and set its size to the size
+        of our structure */
+    int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    if (shared_memory_fd == -1)
+        errExit("shm_open");
+    if (ftruncate(shared_memory_fd, sizeof(SharedInfo)) == -1)
+        errExit("ftruncate");
+    /* Map the object into the caller's address space */
+    SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
+    if (shared_memory_pointer == MAP_FAILED)
+        errExit("mmap");
+    /* Initialize semaphores as process-shared, with value 0 */
+    if (sem_init(&shared_memory_pointer->sem1, 1, 0) == -1)
+        errExit("sem_init-sem1");
+    if (sem_init(&shared_memory_pointer->sem2, 1, 0) == -1)
+        errExit("sem_init-sem2");
+    write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
+    /* Wait for 'sem1' to be posted by peer before touching
+        shared memory */
+    if (sem_wait(&shared_memory_pointer->sem1) == -1)
+        errExit("sem_wait");
+    sem_post(&shared_memory_pointer->sem2);
+
     // 4. Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
     //    canal para enviar cosas al slave:    write_pipefd[i][1]
 
@@ -80,7 +106,7 @@ int main(int argc, char *argv[]) {
         sprintf(message, "%s\n", argv[written_files+1]);
 
         write(write_pipefd[slave_it][1], message, strlen(message));
-        printf("Enviado %s al esclavo %d\n", message, slave_it);
+        // printf("Enviado %s al esclavo %d\n", message, slave_it);
         local_to_read[slave_it]++;
         slave_it++;
         if (slave_it>=SLAVE_COUNT) slave_it = 0;
@@ -95,7 +121,7 @@ int main(int argc, char *argv[]) {
 // ----------------------------  Start Main Loop -------------------------------
 
     while(read_files < argc-1){
-        printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
+        // printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
 
         
 
@@ -127,8 +153,11 @@ int main(int argc, char *argv[]) {
                         // 3.1 Reads from slave and processes info
 
                         // --------- ¡¡¡ACÁ VIENE LO DE JAVI!!! ---------
-
-                        printf("From slave %d: %s\n", i, token);
+                        shared_memory_pointer->buf[0].id = read_files;
+                        strcpy(shared_memory_pointer->buf[0].name, "hola");
+                        strcpy(shared_memory_pointer->buf[0].md5, "fndsjfndskjgn4onnrkl");
+                        sem_post(&shared_memory_pointer->sem2);
+                        // printf("From slave %d: %s\n", i, token);
 
                         // --------- ¡¡¡ACÁ TERMINA LO DE JAVI!!! ---------
 
@@ -142,7 +171,7 @@ int main(int argc, char *argv[]) {
                     if (local_to_read[i] == 0 && written_files < argc-1){
                         sprintf(message, "%s\n", argv[written_files+1]);
                         write(write_pipefd[i][1], message, strlen(message));
-                        printf("Sent %s to slave %d\n", message, i);
+                        // printf("Sent %s to slave %d\n", message, i);
                         written_files++;
                         local_to_read[i]++;
                     }
@@ -162,16 +191,27 @@ int main(int argc, char *argv[]) {
         close(read_pipefd[i][0]);   // Close the read end (optional at this point)
     }
 
-    printf("Files left to write = %d\n", argc-1-written_files);
-    printf("Files left to read = %d\n", argc-1-read_files);
+    // printf("Files left to write = %d\n", argc-1-written_files);
+    // printf("Files left to read = %d\n", argc-1-read_files);
 
     // 6. termina todo
 
     for(int i=0; i<SLAVE_COUNT; i++){
         waitpid(children_pid[i], NULL, 0);
     }
-    puts("md5 application terminated successfully");
-    printf("random child_pid to avoid warning: %d\n", children_pid[0]);
+
+
+    sem_post(&shared_memory_pointer->sem2);
+    shared_memory_pointer->buf[0].id = ';';
+    /* Unlink the shared memory object. Even if the peer process
+        is still using the object, this is okay. The object will
+        be removed only after all open references are closed. */
+    sem_destroy(&shared_memory_pointer->sem1);
+    sem_destroy(&shared_memory_pointer->sem2);
+    shm_unlink(shared_memory_path);
+
+    // puts("md5 application terminated successfully");
+    // printf("random child_pid to avoid warning: %d\n", children_pid[0]);
 
     return 0;
 }
