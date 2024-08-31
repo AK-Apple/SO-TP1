@@ -24,13 +24,10 @@ main(int argc, char *argv[])
     if (shared_memory_pointer == MAP_FAILED)
         errExit("mmap");
 
-    sem_post(&shared_memory_pointer->sem1);
 
-    if (sem_wait(&shared_memory_pointer->sem2) == -1)
-        errExit("sem_wait");
     /* Write modified data in shared memory to standard output */
     while(shared_memory_pointer->buf[0].md5[0] != ';') {
-        if (sem_wait(&shared_memory_pointer->sem2) == -1)
+        if (sem_wait(&shared_memory_pointer->semaphore) == -1)
             errExit("sem_wait");
         printf("vista [md5:%s] [id:%d] [name:%s]\n", shared_memory_pointer->buf[0].md5, shared_memory_pointer->buf[0].id, shared_memory_pointer->buf[0].name);
     }

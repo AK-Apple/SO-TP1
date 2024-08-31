@@ -11,6 +11,7 @@
 
 #define SLAVE_COUNT 5
 #define INIT_DISTRIB 10  // representa un porcentaje (10%)
+#define VIEW_SLEEP 2
 
 
 void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_COUNT][2], int i);
@@ -67,7 +68,6 @@ int main(int argc, char *argv[]) {
 
     // shared memory proceso vista.c
     char *shared_memory_path = "/shared_mem";
-    printf("smhpath %s\n", shared_memory_path);
     /* Create shared memory object and set its size to the size
         of our structure */
     int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -79,17 +79,9 @@ int main(int argc, char *argv[]) {
     SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
     if (shared_memory_pointer == MAP_FAILED)
         errExit("mmap");
-    /* Initialize semaphores as process-shared, with value 0 */
-    if (sem_init(&shared_memory_pointer->sem1, 1, 0) == -1)
-        errExit("sem_init-sem1");
-    if (sem_init(&shared_memory_pointer->sem2, 1, 0) == -1)
-        errExit("sem_init-sem2");
+    if (sem_init(&shared_memory_pointer->semaphore, 1, 0) == -1)
+        errExit("sem_init-sem");
     write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
-    /* Wait for 'sem1' to be posted by peer before touching
-        shared memory */
-    if (sem_wait(&shared_memory_pointer->sem1) == -1)
-        errExit("sem_wait");
-    sem_post(&shared_memory_pointer->sem2);
 
     // 4. Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
     //    canal para enviar cosas al slave:    write_pipefd[i][1]
@@ -112,7 +104,7 @@ int main(int argc, char *argv[]) {
         if (slave_it>=SLAVE_COUNT) slave_it = 0;
     }
     
-    // sleep(1);
+    sleep(VIEW_SLEEP); // consigna: Cuando inicia, debe esperar 2 segundos a que aparezca un proceso vista, si lo hace le comparte el buffer de llegada
 
  
 
@@ -156,7 +148,7 @@ int main(int argc, char *argv[]) {
                         shared_memory_pointer->buf[0].id = read_files;
                         strcpy(shared_memory_pointer->buf[0].name, "hola");
                         strcpy(shared_memory_pointer->buf[0].md5, "fndsjfndskjgn4onnrkl");
-                        sem_post(&shared_memory_pointer->sem2);
+                        sem_post(&shared_memory_pointer->semaphore);
                         // printf("From slave %d: %s\n", i, token);
 
                         // --------- ¡¡¡ACÁ TERMINA LO DE JAVI!!! ---------
@@ -201,13 +193,9 @@ int main(int argc, char *argv[]) {
     }
 
 
-    sem_post(&shared_memory_pointer->sem2);
-    shared_memory_pointer->buf[0].id = ';';
-    /* Unlink the shared memory object. Even if the peer process
-        is still using the object, this is okay. The object will
-        be removed only after all open references are closed. */
-    sem_destroy(&shared_memory_pointer->sem1);
-    sem_destroy(&shared_memory_pointer->sem2);
+    shared_memory_pointer->buf[0].md5[0] = ';';
+    sem_post(&shared_memory_pointer->semaphore);
+    sem_destroy(&shared_memory_pointer->semaphore);
     shm_unlink(shared_memory_path);
 
     // puts("md5 application terminated successfully");

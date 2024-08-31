@@ -20,8 +20,7 @@ typedef struct {
 } Info;
 
 typedef struct {
-    sem_t  sem1;            /* POSIX unnamed semaphore */
-    sem_t  sem2;            /* POSIX unnamed semaphore */
+    sem_t  semaphore;            /* POSIX unnamed semaphore */
     size_t cnt;             /* Number of bytes used in 'buf' */
     Info   buf[BUF_SIZE];   /* Data being transferred */
 } SharedInfo;
