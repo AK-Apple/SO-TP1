@@ -6,6 +6,8 @@
 
 #define MD5_LENGTH 256
 #define CMD_LENGTH 32
+#define MAX_BUF_SIZE 1024
+#define TRUE 1
 
 void getMD5(const char *file_name, char *md5_sum);
 
@@ -15,19 +17,22 @@ int main()
     printf("slave no: %d\n", pid);
 
     char md5[MD5_LENGTH + 1] = {0};
-    char input[1024] = {0};
+    char input[MAX_BUF_SIZE] = {0};
     size_t count = 0;
 
-    while (1) {
-        fflush(STDIN_FILENO);
-        count = read(STDIN_FILENO, &input, 1024);
+    while (TRUE) {
+        count = read(STDIN_FILENO, &input, MAX_BUF_SIZE);
 
         if (*input == EOF) exit(0);
 
         input[count-1] = '\0';
 
         getMD5(input, md5);
-        printf("%s - %s - %d\n", input, md5, pid);
+
+        count = sprintf(input, "%s - %s - %d\n", input, md5, pid);
+
+        write(STDOUT_FILENO, input, count);
+        fflush(STDIN_FILENO);
     }
 }
 
