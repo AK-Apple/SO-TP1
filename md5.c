@@ -30,6 +30,8 @@ int main(int argc, char *argv[]) {
 
     int write_pipefd[SLAVE_COUNT][2];
     int read_pipefd[SLAVE_COUNT][2];
+    const char *result_file_name = "result.txt";
+    int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
 
     for(int i=0; i<SLAVE_COUNT; i++){
         if (pipe(write_pipefd[i]) == -1 || pipe(read_pipefd[i]) == -1) {
@@ -147,10 +149,10 @@ int main(int argc, char *argv[]) {
                         // --------- ¡¡¡ACÁ VIENE LO DE JAVI!!! ---------
                         shared_memory_pointer->buf[0].id = read_files;
                         strcpy(shared_memory_pointer->buf[0].name, "hola");
+                        write(result_fd, "chau", strlen("chau"));
                         strcpy(shared_memory_pointer->buf[0].md5, "fndsjfndskjgn4onnrkl");
                         sem_post(&shared_memory_pointer->semaphore);
                         // printf("From slave %d: %s\n", i, token);
-
                         // --------- ¡¡¡ACÁ TERMINA LO DE JAVI!!! ---------
 
                         read_files++;
@@ -197,6 +199,7 @@ int main(int argc, char *argv[]) {
     sem_post(&shared_memory_pointer->semaphore);
     sem_destroy(&shared_memory_pointer->semaphore);
     shm_unlink(shared_memory_path);
+    close(result_fd);
 
     // puts("md5 application terminated successfully");
     // printf("random child_pid to avoid warning: %d\n", children_pid[0]);
