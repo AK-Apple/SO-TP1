@@ -26,11 +26,11 @@ main(int argc, char *argv[])
 
 
     /* Write modified data in shared memory to standard output */
-    while(shared_memory_pointer->buf[0].md5[0] != ';') {
+    //while(shared_memory_pointer->buf[0].md5[0] != ';') {
         if (sem_wait(&shared_memory_pointer->semaphore) == -1)
             errExit("sem_wait");
-        printf("vista [md5:%s] [id:%d] [name:%s]\n", shared_memory_pointer->buf[0].md5, shared_memory_pointer->buf[0].id, shared_memory_pointer->buf[0].name);
-    }
+        printf("vista [ md5: %s] [ id: %d ] [ name: %s]\n", shared_memory_pointer->buf[0].md5, shared_memory_pointer->buf[0].id, shared_memory_pointer->buf[0].name);
+    //}
 
 
     exit(EXIT_SUCCESS);

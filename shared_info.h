@@ -15,7 +15,7 @@
 
 typedef struct {
     char name[STR_SIZE];
-    char md5[STR_SIZE];
+    char md5[BUF_SIZE];
     int id;
 } Info;
 

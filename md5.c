@@ -23,7 +23,7 @@ void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_CO
 // Entonces se distribuyen 10 archivos en 5 esclavos
 
 int main(int argc, char *argv[]) {
-    // printf("Esto es md5.c: argcount=%d\n", argc);
+    printf("Esto es md5.c: argcount=%d\n", argc);
 
 
     // 1. Creo arrays de Pipes
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     pid_t children_pid[SLAVE_COUNT] = {0}; 
     for(int i = 0; i < SLAVE_COUNT; i++) { 
-        const char *slave_name = "junior_slave";    //TODO: reemplazar por el slave posta
+        const char *slave_name = "slave";    //TODO: reemplazar por el slave posta
         char * const param_list[2] = {slave_name, NULL};
         pid_t child_pid = fork();
         if(child_pid == -1) {
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     }
 
     // shared memory proceso vista.c
-    char *shared_memory_path = "/shared_mem";
+    char *shared_memory_path = "/shared_mem94";
     /* Create shared memory object and set its size to the size
         of our structure */
     int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -100,24 +100,22 @@ int main(int argc, char *argv[]) {
         sprintf(message, "%s\n", argv[written_files+1]);
 
         write(write_pipefd[slave_it][1], message, strlen(message));
-        // printf("Enviado %s al esclavo %d\n", message, slave_it);
+        printf("Enviado %s al esclavo %d\n", message, slave_it);
         local_to_read[slave_it]++;
         slave_it++;
         if (slave_it>=SLAVE_COUNT) slave_it = 0;
     }
-    
+
+
     sleep(VIEW_SLEEP); // consigna: Cuando inicia, debe esperar 2 segundos a que aparezca un proceso vista, si lo hace le comparte el buffer de llegada
 
- 
 
     int read_files = 0;
 
 // ----------------------------  Start Main Loop -------------------------------
 
     while(read_files < argc-1){
-        // printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
-
-        
+        printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
 
         // 1. Create set of read pipes
         fd_set read_set;
@@ -136,29 +134,45 @@ int main(int argc, char *argv[]) {
 
         // 3. Iterate through readable pipes
         char buffer[4096];
+
         for(int i=0; i < SLAVE_COUNT && readable_pipes > 0 && read_files < argc-1; i++){
+
             if (FD_ISSET(read_pipefd[i][0], &read_set)) {
                 ssize_t bytes_read = read(read_pipefd[i][0], buffer, sizeof(buffer) - 1);
+
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
 
                     char *token = strtok(buffer, "\n");
-                    do{
+                    /*do{
                         // 3.1 Reads from slave and processes info
 
                         // --------- ¡¡¡ACÁ VIENE LO DE JAVI!!! ---------
                         shared_memory_pointer->buf[0].id = read_files;
                         strcpy(shared_memory_pointer->buf[0].name, "hola");
                         write(result_fd, "chau", strlen("chau"));
-                        strcpy(shared_memory_pointer->buf[0].md5, "fndsjfndskjgn4onnrkl");
+                        strcpy(shared_memory_pointer->buf[0].md5, buffer);
                         sem_post(&shared_memory_pointer->semaphore);
-                        // printf("From slave %d: %s\n", i, token);
+                        printf("From slave %d: %s\n", i, token);
                         // --------- ¡¡¡ACÁ TERMINA LO DE JAVI!!! ---------
 
                         read_files++;
                         local_to_read[i]--;
                     } 
-                    while ((token = strtok(NULL, "\n")));
+                    while ((token = strtok(NULL, "\n")));*/
+
+                    // LUCA
+                        
+                        shared_memory_pointer->buf[0].id = read_files;
+                        strcpy(shared_memory_pointer->buf[0].name, strtok(NULL, "-"));
+                        strcpy(shared_memory_pointer->buf[0].md5, strtok(NULL, "-"));
+                        shared_memory_pointer->buf[0].id = atoi(strtok(NULL, "-"));
+                        sem_post(&shared_memory_pointer->semaphore);
+
+                        read_files++;
+                        local_to_read[i]--;
+                    // LUCA
+
                     readable_pipes--;
 
                     // write ONLY if slave has finished processing
@@ -179,8 +193,9 @@ int main(int argc, char *argv[]) {
     // sleep(1);
     
     // Close all pipes after processing
+    int eof = -1;
     for(int i=0; i<SLAVE_COUNT; i++){
-        write(write_pipefd[i][1], "EOF\n", 4);
+        write(write_pipefd[i][1], &eof, 4);
         close(write_pipefd[i][1]);  // This sends EOF to the slave
         close(read_pipefd[i][0]);   // Close the read end (optional at this point)
     }

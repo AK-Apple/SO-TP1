@@ -1,13 +1,13 @@
-all: md5 vista slave junior_slave
+all: md5 vista slave
 
 md5: md5.c
-	gcc -Wall -std=c99 $< -o $@ -g
+	gcc -Wall -std=c99 -fsanitize=address $< -o $@ -g
 
 vista: vista.c
-	gcc -Wall -std=c99 $< -o $@ -g
+	gcc -Wall -std=c99 -fsanitize=address $< -o $@ -g
 
 slave: slave.c
-	gcc -Wall -std=c99 $< -o $@ -g
+	gcc -Wall -D_GNU_SOURCE -fsanitize=address $< -o $@ -g
 
 junior_slave: junior_slave.c
 	gcc -Wall -std=c99 $< -o $@ -g
