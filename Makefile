@@ -1,13 +1,13 @@
-all: md5 vista slave
+all: md5 vista slave junior_slave
 
 md5: md5.c
-	gcc -Wall -std=c99 -fsanitize=address $< -o $@ -g
+	gcc -Wall -std=c99 $< -o $@ -lrt -pthread -g 
 
 vista: vista.c
-	gcc -Wall -std=c99 -fsanitize=address $< -o $@ -g
+	gcc -Wall -std=c99 $< -o $@ -lrt -pthread -g
 
 slave: slave.c
-	gcc -Wall -D_GNU_SOURCE -fsanitize=address $< -o $@ -g
+	gcc -Wall -std=c99 $< -o $@ -g
 
 junior_slave: junior_slave.c
 	gcc -Wall -std=c99 $< -o $@ -g
@@ -17,4 +17,4 @@ clean:
 
 .PHONY: all clean
 
-# uso -std=c99 porque a mí no me compilaban algunos archivos
+# uso -std=c99 y -pthread porque a mí no me compilaban algunos archivos

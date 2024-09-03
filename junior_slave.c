@@ -17,8 +17,8 @@ int main() {
             buffer[len-1] = '\0';
         }
 
-        // Print a message before printing the line
-        printf("Junior slave read: %s\n", buffer);
+        // Print a message to the master
+        printf("%s random_md5 %d\n", buffer, getpid());
         fflush(stdout);
         if(strcmp(buffer, "EOF") == 0){
             break;

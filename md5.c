@@ -7,6 +7,8 @@
 #include <string.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <semaphore.h>
+#include <unistd.h>
 
 
 #define SLAVE_COUNT 5
@@ -150,7 +152,10 @@ int main(int argc, char *argv[]) {
                         // --------- ¡¡¡ACÁ VIENE LO DE JAVI!!! ---------
                         shared_memory_pointer->buf[0].id = read_files;
                         strcpy(shared_memory_pointer->buf[0].name, "hola");
-                        write(result_fd, "chau", strlen("chau"));
+
+                        write(result_fd, buffer, strlen(buffer));
+                        write(result_fd, "\n", 1);
+
                         strcpy(shared_memory_pointer->buf[0].md5, buffer);
                         sem_post(&shared_memory_pointer->semaphore);
                         printf("From slave %d: %s\n", i, token);
@@ -171,6 +176,10 @@ int main(int argc, char *argv[]) {
 
                         read_files++;
                         local_to_read[i]--;
+
+                        // estos comandos son para meter todo en result.txt, pero por las dudas los comenté
+                        // write(result_fd, buffer, strlen(buffer));
+                        // write(result_fd, "\n", 1);
                     // LUCA
 
                     readable_pipes--;
