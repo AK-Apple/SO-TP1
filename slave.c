@@ -17,29 +17,32 @@ int main()
     printf("slave no: %d\n", pid);
 
     char md5[MD5_LENGTH];
-    char input[MAX_BUF_SIZE];
-    size_t count = 0;
 
     while (TRUE) {
-        memset(input, 0, MAX_BUF_SIZE);
-        memset(md5, 0, MD5_LENGTH);
 
+        char input[MAX_BUF_SIZE];
+        size_t count = 0;
         count = read(STDIN_FILENO, &input, MAX_BUF_SIZE);
 
-        if (count <= 1)
-            exit(0);
-
+        if (count == 0 || input[0] == EOF){
+             exit(0);
+        }
+           
         input[count-1] = '\0';
+        printf("input: %s\n", input);
 
-        getMD5(input, md5);
+        char* token = strtok(input, "\n");
+        while (token != NULL) {
+            printf("entered strtok\n");
+            getMD5(token, md5);
 
-        char buff[MAX_BUF_SIZE];
-        
-        count = snprintf(buff, MAX_BUF_SIZE, "%s - %s - %d\n", input, md5, pid);
+            char buff[MAX_BUF_SIZE];
+            count = snprintf(buff, MAX_BUF_SIZE, "%s %s %d\n", token, md5, pid);
+            write(STDOUT_FILENO, buff, count);
 
-        write(STDOUT_FILENO, buff, count);
-        fflush(stdout);
-        fflush(stdin);
+            token = strtok(NULL, "\n");
+        }
+
     }
 }
 

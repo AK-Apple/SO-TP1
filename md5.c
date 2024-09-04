@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     pid_t children_pid[SLAVE_COUNT] = {0}; 
     for(int i = 0; i < SLAVE_COUNT; i++) { 
-        const char *slave_name = "junior_slave";    //TODO: reemplazar por el slave posta
+        const char *slave_name = "slave";    //TODO: reemplazar por el slave posta
         char * const param_list[2] = {slave_name, NULL};
         pid_t child_pid = fork();
         if(child_pid == -1) {
@@ -225,10 +225,10 @@ int main(int argc, char *argv[]) {
     // sleep(1);
     
     // Close all pipes after processing
-    // int eof = -1;
-    char* eof_msg = "EOF\n";
+    char eof = -1;
+    // char* eof_msg = "EOF\n";
     for(int i=0; i<SLAVE_COUNT; i++){
-        write(write_pipefd[i][1], eof_msg, strlen(eof_msg));
+        write(write_pipefd[i][1], &eof, 1);
         close(write_pipefd[i][1]);  // This sends EOF to the slave
         close(read_pipefd[i][0]);   // Close the read end (optional at this point)
     }
