@@ -15,6 +15,7 @@
 #define INIT_DISTRIB 10  // representa un porcentaje (10%)
 #define VIEW_SLEEP 2
 
+int instances_of_char(char* str, char c);
 
 void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_COUNT][2], int i);
 
@@ -26,6 +27,7 @@ void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_CO
 
 int main(int argc, char *argv[]) {
     printf("Esto es md5.c: argcount=%d\n", argc);
+    
 
 
     // 1. Creo arrays de Pipes
@@ -46,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     pid_t children_pid[SLAVE_COUNT] = {0}; 
     for(int i = 0; i < SLAVE_COUNT; i++) { 
-        const char *slave_name = "slave";    //TODO: reemplazar por el slave posta
+        const char *slave_name = "junior_slave";    //TODO: reemplazar por el slave posta
         char * const param_list[2] = {slave_name, NULL};
         pid_t child_pid = fork();
         if(child_pid == -1) {
@@ -72,6 +74,11 @@ int main(int argc, char *argv[]) {
 
     // shared memory proceso vista.c
     char *shared_memory_path = "/shared_mem94";
+
+    // --------- Comado  importate ----------
+    shm_unlink(shared_memory_path);
+    // --------- Comado  importate ----------
+
     /* Create shared memory object and set its size to the size
         of our structure */
     int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -133,6 +140,7 @@ int main(int argc, char *argv[]) {
         // 2. Wait and select readable pipes
         struct timeval read_timeout = {0, 100000}; // 0.1 second timeout
         int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, &read_timeout);
+        printf("%d\n", readable_pipes);
 
         // 3. Iterate through readable pipes
         char buffer[4096];
@@ -145,7 +153,21 @@ int main(int argc, char *argv[]) {
                 if (bytes_read > 0) {
                     buffer[bytes_read] = '\0';
 
-                    char *token = strtok(buffer, "\n");
+                    // char *token = strtok(buffer, "\n");
+                     
+                    // ------ Nuevo intento -------
+
+                    sem_post(&shared_memory_pointer->semaphore);
+                    write(result_fd, buffer, strlen(buffer));
+
+                    int files_this_iteration = instances_of_char(buffer, '\n');
+                    read_files+= files_this_iteration;
+                    local_to_read[i]-= files_this_iteration;
+
+
+                    // ------ Fin Nuevo intento -------
+
+
                     /*do{
                         // 3.1 Reads from slave and processes info
 
@@ -168,14 +190,14 @@ int main(int argc, char *argv[]) {
 
                     // LUCA
                         
-                        shared_memory_pointer->buf[0].id = read_files;
-                        strcpy(shared_memory_pointer->buf[0].name, strtok(NULL, "-"));
-                        strcpy(shared_memory_pointer->buf[0].md5, strtok(NULL, "-"));
-                        shared_memory_pointer->buf[0].id = atoi(strtok(NULL, "-"));
-                        sem_post(&shared_memory_pointer->semaphore);
+                        // shared_memory_pointer->buf[0].id = read_files;
+                        // strcpy(shared_memory_pointer->buf[0].name, strtok(NULL, "-"));
+                        // strcpy(shared_memory_pointer->buf[0].md5, strtok(NULL, "-"));
+                        // shared_memory_pointer->buf[0].id = atoi(strtok(NULL, "-"));
+                        // sem_post(&shared_memory_pointer->semaphore);
 
-                        read_files++;
-                        local_to_read[i]--;
+                        // read_files++;
+                        // local_to_read[i]--;
 
                         // estos comandos son para meter todo en result.txt, pero por las dudas los comenté
                         // write(result_fd, buffer, strlen(buffer));
@@ -199,12 +221,14 @@ int main(int argc, char *argv[]) {
 
 // ----------------------------  End Main Loop -------------------------------
 
+    printf("end main loop\n");
     // sleep(1);
     
     // Close all pipes after processing
-    int eof = -1;
+    // int eof = -1;
+    char* eof_msg = "EOF\n";
     for(int i=0; i<SLAVE_COUNT; i++){
-        write(write_pipefd[i][1], &eof, 4);
+        write(write_pipefd[i][1], eof_msg, strlen(eof_msg));
         close(write_pipefd[i][1]);  // This sends EOF to the slave
         close(read_pipefd[i][0]);   // Close the read end (optional at this point)
     }
@@ -241,4 +265,11 @@ void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_CO
     close(read_pipefd[i][0]); // borro canal "read end"
     dup2(read_pipefd[i][1], STDOUT_FILENO); // asigno fd=1 a "write end"
     close(read_pipefd[i][1]); // cierro fd extra"
+}
+
+int instances_of_char(char* str, char c){
+    int i, count;
+    for (i=0, count=0; str[i]; i++)
+        count += (str[i] == c);
+    return(count);
 }
