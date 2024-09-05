@@ -10,34 +10,50 @@
 #include <semaphore.h>
 #include <unistd.h>
 
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
-#define SLAVE_COUNT 5
+
 #define INIT_DISTRIB 10  // representa un porcentaje (10%)
+
+// NUEVOS:
+#define SLAVES_PER_100_FILES 5
+#define MAX_FILES_PER_SLAVE 2
+#define MAX_SLAVES_COUNT 20
+
 #define VIEW_SLEEP 2
 
 int instances_of_char(char* str, char c);
 
-void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_COUNT][2], int i);
+void manipulate_pipes(int write_pipefd[][2], int read_pipefd[][2], int i);
+
+int ceil_of_fraction(int x, int y);
 
 // Ejemplo:
 // Tengo 100 esclavos
-// Seteo INIT_DISTRIB = 10
-// Seteo SLAVE_COUNT = 5
+// Seteo SLAVES_PER_100_FILES = 10
+// Seteo POSSIBLE_FILES_PER_SLAVE = 5
+
 // Entonces se distribuyen 10 archivos en 5 esclavos
 
 int main(int argc, char *argv[]) {
     printf("Esto es md5.c: argcount=%d\n", argc);
+
+    int files_amount = argc - 1;
+    int slaves_count = MIN(ceil_of_fraction(files_amount * SLAVES_PER_100_FILES, 100), MAX_SLAVES_COUNT);
+    int files_per_slave = MIN(files_amount/slaves_count, MAX_FILES_PER_SLAVE);
+
+    printf("slaves_count = %d\nfiles_per_slave = %d\n", slaves_count, files_per_slave);
     
 
 
     // 1. Creo arrays de Pipes
 
-    int write_pipefd[SLAVE_COUNT][2];
-    int read_pipefd[SLAVE_COUNT][2];
+    int write_pipefd[slaves_count][2];
+    int read_pipefd[slaves_count][2];
     const char *result_file_name = "result.txt";
     int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
 
-    for(int i=0; i<SLAVE_COUNT; i++){
+    for(int i=0; i<slaves_count; i++){
         if (pipe(write_pipefd[i]) == -1 || pipe(read_pipefd[i]) == -1) {
             perror("pipe");
             exit(EXIT_FAILURE);
@@ -46,8 +62,8 @@ int main(int argc, char *argv[]) {
 
     // 2. Hago forks
 
-    pid_t children_pid[SLAVE_COUNT] = {0}; 
-    for(int i = 0; i < SLAVE_COUNT; i++) { 
+    pid_t children_pid[MAX_SLAVES_COUNT] = {0}; 
+    for(int i = 0; i < slaves_count; i++) { 
         const char *slave_name = "slave";    //TODO: reemplazar por el slave posta
         char * const param_list[2] = {slave_name, NULL};
         pid_t child_pid = fork();
@@ -94,25 +110,25 @@ int main(int argc, char *argv[]) {
         errExit("sem_init-sem");
     write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
 
+
     // 4. Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
     //    canal para enviar cosas al slave:    write_pipefd[i][1]
 
     char message[100];  //de última lo alargamos
-    int written_files = 0;
     int slave_it = 0;
     int file_limit = ((argc-1)*INIT_DISTRIB)/100;
-    int local_to_read[SLAVE_COUNT] = {0};
+    int local_to_read[MAX_SLAVES_COUNT] = {0};
 
 
-    for(written_files=0; written_files < file_limit; written_files++){
-        
-        sprintf(message, "%s\n", argv[written_files+1]);
 
-        write(write_pipefd[slave_it][1], message, strlen(message));
-        printf("Enviado %s al esclavo %d\n", message, slave_it);
-        local_to_read[slave_it]++;
-        slave_it++;
-        if (slave_it>=SLAVE_COUNT) slave_it = 0;
+    for(int i=0; i<slaves_count; i++){
+        for(int j=0; j<files_per_slave; j++){
+            int written_files = i*files_per_slave + j;
+            sprintf(message, "%s\n", argv[written_files+1]);
+            write(write_pipefd[i][1], message, strlen(message));
+            printf("Enviado %s al esclavo %d\n", message, i);
+        }
+        local_to_read[i] = files_per_slave;
     }
 
 
@@ -120,6 +136,7 @@ int main(int argc, char *argv[]) {
 
 
     int read_files = 0;
+    int written_files = slaves_count*files_per_slave;
 
 // ----------------------------  Start Main Loop -------------------------------
 
@@ -130,7 +147,7 @@ int main(int argc, char *argv[]) {
         fd_set read_set;
         FD_ZERO(&read_set);
         int max_fd = 0;
-        for(int i=0; i<SLAVE_COUNT; i++){
+        for(int i=0; i<slaves_count; i++){
             FD_SET(read_pipefd[i][0], &read_set);
             if (read_pipefd[i][0] > max_fd) {
                 max_fd = read_pipefd[i][0];
@@ -145,7 +162,7 @@ int main(int argc, char *argv[]) {
         // 3. Iterate through readable pipes
         char buffer[4096];
 
-        for(int i=0; i < SLAVE_COUNT && readable_pipes > 0 && read_files < argc-1; i++){
+        for(int i=0; i < slaves_count && readable_pipes > 0 && read_files < argc-1; i++){
 
             if (FD_ISSET(read_pipefd[i][0], &read_set)) {
                 ssize_t bytes_read = read(read_pipefd[i][0], buffer, sizeof(buffer) - 1);
@@ -227,7 +244,7 @@ int main(int argc, char *argv[]) {
     // Close all pipes after processing
     char eof = -1;
     // char* eof_msg = "EOF\n";
-    for(int i=0; i<SLAVE_COUNT; i++){
+    for(int i=0; i<slaves_count; i++){
         write(write_pipefd[i][1], &eof, 1);
         close(write_pipefd[i][1]);  // This sends EOF to the slave
         close(read_pipefd[i][0]);   // Close the read end (optional at this point)
@@ -238,7 +255,7 @@ int main(int argc, char *argv[]) {
 
     // 6. termina todo
 
-    for(int i=0; i<SLAVE_COUNT; i++){
+    for(int i=0; i<slaves_count; i++){
         waitpid(children_pid[i], NULL, 0);
     }
 
@@ -257,7 +274,7 @@ int main(int argc, char *argv[]) {
 
 
 
-void manipulate_pipes(int write_pipefd[SLAVE_COUNT][2], int read_pipefd[SLAVE_COUNT][2], int i){
+void manipulate_pipes(int write_pipefd[][2], int read_pipefd[][2], int i){
     close(write_pipefd[i][1]); // borro canal "write end"
     dup2(write_pipefd[i][0], STDIN_FILENO); // asigno fd=0 a "read end"
     close(write_pipefd[i][0]); // cierro fd extra"
@@ -272,4 +289,8 @@ int instances_of_char(char* str, char c){
     for (i=0, count=0; str[i]; i++)
         count += (str[i] == c);
     return(count);
+}
+
+int ceil_of_fraction(int x, int y){     // = ceil(x/y)
+    return (x + y - 1) / y;
 }
