@@ -3,6 +3,7 @@ md5
 vista
 slave
 junior_slave
+PipeGroupTest
 *.out
 
 .bash_history
