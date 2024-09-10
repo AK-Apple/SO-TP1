@@ -6,12 +6,21 @@ junior_slave
 PipeGroupTest
 *.out
 
+# creados por programas de uso personal
 .bash_history
 .DS_Store
 .vscode
-
 .idea
-personal.c
-result.txt
 .git_history
 .idea
+
+personal.c
+
+# creados por el programa mismo
+result.txt
+
+# PVS
+report.tasks
+PVS-Studio.log
+strace_out
+.config

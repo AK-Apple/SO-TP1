@@ -21,7 +21,7 @@ PipeGroupTest: PipeGroupTest.c
 
 
 clean:
-	rm -f md5 vista slave junior_slave PipeGroupTest
+	rm -f md5 vista slave junior_slave PipeGroupTest result.txt
 
 .PHONY: all clean
 
