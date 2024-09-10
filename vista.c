@@ -1,37 +1,25 @@
-/* Programa: Hola mundo */
-#include "shared_info.h"
+#include "resultADT.h"
 
 int
 main(int argc, char *argv[])
 {
+    setvbuf(stdout, NULL, _IONBF, 0); 
     char shared_memory_path[256];
     if (argc == 1) {
-        read(STDIN_FILENO, shared_memory_path, 256);
+        scanf("%s", shared_memory_path);
+        // read(STDIN_FILENO, shared_memory_path, 256);
     }
     else {
         strcpy(shared_memory_path, argv[1]); // copia quiza innecesaria
     }
-    // printf("shgPATH [%s]\n", shared_memory_path);
+    int pid = atoi(shared_memory_path);
 
-    /* Open the existing shared memory object and map it
-        into the caller's address space */
+    ResultADT result_ADT = open_result_ADT(pid);
+    int res = 0;
+    while(res != ';') {
+        res = print_result(result_ADT);
+    }
 
-    int shared_memory_fd = shm_open(shared_memory_path, O_RDWR, 0);
-    if (shared_memory_fd == -1)
-        errExit("shm_open");
-
-    SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
-    if (shared_memory_pointer == MAP_FAILED)
-        errExit("mmap");
-
-
-    /* Write modified data in shared memory to standard output */
-    //while(shared_memory_pointer->buf[0].md5[0] != ';') {
-        if (sem_wait(&shared_memory_pointer->semaphore) == -1)
-            errExit("sem_wait");
-        printf("vista [ md5: %s] [ id: %d ] [ name: %s]\n", shared_memory_pointer->buf[0].md5, shared_memory_pointer->buf[0].id, shared_memory_pointer->buf[0].name);
-    //}
-
-
+    close_result_ADT(result_ADT);
     exit(EXIT_SUCCESS);
 }

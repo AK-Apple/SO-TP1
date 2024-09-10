@@ -8,7 +8,7 @@ md5: md5.c
 	gcc $(PARAMS) $< -o $@
 
 vista: vista.c
-	gcc $(PARAMS) $< -o $@
+	gcc $(PARAMS) ResultADT.c $< -o $@
 
 slave: slave.c
 	gcc $(PARAMS) $< -o $@
@@ -17,7 +17,7 @@ junior_slave: junior_slave.c
 	gcc $(PARAMS) $< -o $@ 
 
 PipeGroupTest: PipeGroupTest.c
-	gcc $(PARAMS) $< -o $@
+	gcc $(PARAMS) ResultADT.c $< -o $@
 
 
 clean:

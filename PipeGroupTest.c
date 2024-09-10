@@ -1,4 +1,3 @@
-#include "shared_info.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -9,6 +8,7 @@
 #include <semaphore.h>
 #include <unistd.h>
 #include "PipeGroupADT.c"
+#include "ResultADT.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
@@ -36,16 +36,17 @@ int ceil_of_fraction(int x, int y);
 // Entonces se distribuyen 10 archivos en 5 esclavos
 
 int main(int argc, char *argv[]) {
-    printf("Esto es md5.c: argcount=%d\n", argc);
-
+    // printf("Esto es md5.c: argcount=%d\n", argc);
+    setvbuf(stdout, NULL, _IONBF, 0); 
     int files_amount = argc - 1;
     int slaves_count = MIN(ceil_of_fraction(files_amount * SLAVES_PER_100_FILES, 100), MAX_SLAVES_COUNT);
     int files_per_slave = MIN(files_amount/slaves_count, MAX_FILES_PER_SLAVE);
 
-    printf("slaves_count = %d\nfiles_per_slave = %d\n", slaves_count, files_per_slave);
+    // printf("slaves_count = %d\nfiles_per_slave = %d\n", slaves_count, files_per_slave);
     
-
-    
+    pid_t pid = getpid();
+    ResultADT result_ADT = new_result_ADT(pid);
+    printf("%d\n", pid);
 
     const char *result_file_name = "result.txt";
     int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
@@ -80,28 +81,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // shared memory proceso vista.c
-    char *shared_memory_path = "/shared_mem94";
-
-    // --------- Comado  importate ----------
-    shm_unlink(shared_memory_path);
-    // --------- Comado  importate ----------
-
-    /* Create shared memory object and set its size to the size
-        of our structure */
-    int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
-    if (shared_memory_fd == -1)
-        errExit("shm_open");
-    if (ftruncate(shared_memory_fd, sizeof(SharedInfo)) == -1)
-        errExit("ftruncate");
-    /* Map the object into the caller's address space */
-    SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
-    if (shared_memory_pointer == MAP_FAILED)
-        errExit("mmap");
-    if (sem_init(&shared_memory_pointer->semaphore, 1, 0) == -1)
-        errExit("sem_init-sem");
-    write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
-
 
     // 4. Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
     //    canal para enviar cosas al slave:    write_pipefd[i][1]
@@ -118,14 +97,10 @@ int main(int argc, char *argv[]) {
             int written_files = i*files_per_slave + j;
             sprintf(message, "%s\n", argv[written_files+1]);
             write_pipe_pair(pipe_group, i, message);
-            printf("Enviado %s al esclavo %d\n", message, i);
+            // printf("Enviado %s al esclavo %d\n", message, i);
         }
         local_to_read[i] = files_per_slave;
     }
-
-
-    sleep(VIEW_SLEEP); // consigna: Cuando inicia, debe esperar 2 segundos a que aparezca un proceso vista, si lo hace le comparte el buffer de llegada
-
 
     int read_files = 0;
     int written_files = slaves_count*files_per_slave;
@@ -133,7 +108,7 @@ int main(int argc, char *argv[]) {
 // ----------------------------  Start Main Loop -------------------------------
 
     while(read_files < argc-1){
-        printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
+        // printf("new cycle. Read files: %d. Written files: %d\n", read_files, written_files);
 
         // 1. Create set of read pipes
         // 2. Select readable pipes
@@ -149,12 +124,11 @@ int main(int argc, char *argv[]) {
             buffer[bytes_read] = '\0';
 
             // Start Javi //
-
-            sem_post(&shared_memory_pointer->semaphore);
+            write_result(result_ADT, buffer);
+            write(result_fd, buffer, strlen(buffer));
 
             // End Javi //
 
-            write(result_fd, buffer, strlen(buffer));
 
             int files_this_iteration = instances_of_char(buffer, '\n');
             read_files+= files_this_iteration;
@@ -176,7 +150,7 @@ int main(int argc, char *argv[]) {
 
 // ----------------------------  End Main Loop -------------------------------
 
-    printf("end main loop\n");
+    // printf("end main loop\n");
     
    close_pipes(pipe_group);
 
@@ -190,12 +164,8 @@ int main(int argc, char *argv[]) {
     }
 
 
-    shared_memory_pointer->buf[0].md5[0] = ';';
-    sem_post(&shared_memory_pointer->semaphore);
-    sem_destroy(&shared_memory_pointer->semaphore);
-    shm_unlink(shared_memory_path);
     close(result_fd);
-
+    free_result_ADT(result_ADT);
     // puts("md5 application terminated successfully");
     // printf("random child_pid to avoid warning: %d\n", children_pid[0]);
 

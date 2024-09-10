@@ -1,5 +1,5 @@
 /* Programa: md5.c aplication */
-#include "shared_info.h"
+// #include "shared_info.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     int write_pipefd[slaves_count][2];
     int read_pipefd[slaves_count][2];
     const char *result_file_name = "result.txt";
-    int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
+    // int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
 
     for(int i=0; i<slaves_count; i++){
         if (pipe(write_pipefd[i]) == -1 || pipe(read_pipefd[i]) == -1) {
@@ -97,18 +97,18 @@ int main(int argc, char *argv[]) {
 
     /* Create shared memory object and set its size to the size
         of our structure */
-    int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
-    if (shared_memory_fd == -1)
-        errExit("shm_open");
-    if (ftruncate(shared_memory_fd, sizeof(SharedInfo)) == -1)
-        errExit("ftruncate");
-    /* Map the object into the caller's address space */
-    SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
-    if (shared_memory_pointer == MAP_FAILED)
-        errExit("mmap");
-    if (sem_init(&shared_memory_pointer->semaphore, 1, 0) == -1)
-        errExit("sem_init-sem");
-    write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
+    // int shared_memory_fd = shm_open(shared_memory_path, O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    // if (shared_memory_fd == -1)
+    //     errExit("shm_open");
+    // if (ftruncate(shared_memory_fd, sizeof(SharedInfo)) == -1)
+    //     errExit("ftruncate");
+    // /* Map the object into the caller's address space */
+    // SharedInfo *shared_memory_pointer = mmap(NULL, sizeof(*shared_memory_pointer), PROT_READ | PROT_WRITE, MAP_SHARED, shared_memory_fd, 0);
+    // if (shared_memory_pointer == MAP_FAILED)
+    //     errExit("mmap");
+    // if (sem_init(&shared_memory_pointer->semaphore, 1, 0) == -1)
+    //     errExit("sem_init-sem");
+    // write(STDOUT_FILENO, shared_memory_path, strlen(shared_memory_path)); // print shared_memory_path for | vista.c
 
 
     // 4. Hago la distribución inicial, es decir itero los archivos, y a cada archivo le asigno un slave
@@ -174,8 +174,8 @@ int main(int argc, char *argv[]) {
                      
                     // ------ Nuevo intento -------
 
-                    sem_post(&shared_memory_pointer->semaphore);
-                    write(result_fd, buffer, strlen(buffer));
+                    // sem_post(&shared_memory_pointer->semaphore);
+                    // write(result_fd, buffer, strlen(buffer));
 
                     int files_this_iteration = instances_of_char(buffer, '\n');
                     read_files+= files_this_iteration;
@@ -260,11 +260,11 @@ int main(int argc, char *argv[]) {
     }
 
 
-    shared_memory_pointer->buf[0].md5[0] = ';';
-    sem_post(&shared_memory_pointer->semaphore);
-    sem_destroy(&shared_memory_pointer->semaphore);
-    shm_unlink(shared_memory_path);
-    close(result_fd);
+    // shared_memory_pointer->buf[0].md5[0] = ';';
+    // sem_post(&shared_memory_pointer->semaphore);
+    // sem_destroy(&shared_memory_pointer->semaphore);
+    // shm_unlink(shared_memory_path);
+    // close(result_fd);
 
     // puts("md5 application terminated successfully");
     // printf("random child_pid to avoid warning: %d\n", children_pid[0]);

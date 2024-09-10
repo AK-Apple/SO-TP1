@@ -33,7 +33,7 @@ PipeGroupADT new_pipe_group(int size){
 
     }
 
-    printf("pipes creados\n");
+    // printf("pipes creados\n");
     return group;
 }
 
@@ -53,7 +53,7 @@ int* select_readable(PipeGroupADT group){
     // 2. select readable pipes
     struct timeval read_timeout = {0, 100000}; // 0.1 second timeout
     int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, &read_timeout);
-    printf("%d\n", readable_pipes);
+    // printf("%d\n", readable_pipes);
 
     // 3. Return
     int* selected = (int*)malloc((group->size+1) * sizeof(int));
@@ -108,6 +108,6 @@ void close_pipes(PipeGroupADT group){
         close(group->read_pipes[i][0]);
         close(group->write_pipes[i][1]);
     }
-    printf("pipes cerrados\n");
+    // printf("pipes cerrados\n");
     // TODO: agregar FREE TODITO
 }
