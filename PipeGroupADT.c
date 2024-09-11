@@ -94,7 +94,7 @@ void choose_pipe_pair(PipeGroupADT group, int i){
 }
 
 
-ssize_t write_pipe_pair(PipeGroupADT group, int i,char* str){
+ssize_t write_pipe_pair(PipeGroupADT group, int i, char* str){
     return write(group->write_pipes[i][1], str, strlen(str));
 }
 
@@ -102,11 +102,11 @@ ssize_t read_pipe_pair(PipeGroupADT group, int i, char* buffer){
     return read(group->read_pipes[i][0], buffer, BUF_SIZE);
 }
 
-// sends EOF to all the pipes and closes them
+
 void close_pipes(PipeGroupADT group){
-    char eof = -1;
+    char end_of_file[2] = {EOF, 0};
     for (int i = 0; i < group->size; i++) {
-        write_pipe_pair(group, i, &eof);
+        write_pipe_pair(group, i, end_of_file);
         close(group->read_pipes[i][0]);
         close(group->write_pipes[i][1]);
     }

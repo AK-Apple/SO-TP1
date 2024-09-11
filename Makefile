@@ -1,11 +1,11 @@
 LINKEDITABLE = PipeGroupADT.c
 
-PARAMS = -Wall -std=c99 -lrt -pthread -g
+PARAMS = -Wall -std=c99 -lrt -pthread -g 
 
-all: md5 vista slave junior_slave PipeGroupTest
+all: vista slave junior_slave PipeGroupTest
 
-md5: md5.c
-	gcc $(PARAMS) $< -o $@
+# md5: md5.c
+# gcc $(PARAMS) $< -o $@
 
 vista: vista.c
 	gcc $(PARAMS) ResultADT.c $< -o $@

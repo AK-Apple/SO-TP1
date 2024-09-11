@@ -5,20 +5,22 @@
 int
 main(int argc, char *argv[])
 {
-    setvbuf(stdout, NULL, _IONBF, 0); 
-    char shared_memory_path[256];
+    int pid = 0;
+    int file_count = 1;
     if (argc == 1) {
-        scanf("%s", shared_memory_path);
-        // read(STDIN_FILENO, shared_memory_path, 256);
+        scanf("%d %d", &pid, &file_count);
+    }
+    else if(argc == 3) {
+        pid = atoi(argv[1]);
+        file_count = atoi(argv[2]); 
     }
     else {
-        strcpy(shared_memory_path, argv[1]); // copia quiza innecesaria
+        printf("Expected 3 or 1 arguments but got %d\n%s <master_pid> <file_count>", argc, argv[0]);
     }
-    int pid = atoi(shared_memory_path);
 
-    ResultADT result_ADT = open_result_ADT(pid);
+    ResultADT result_ADT = open_result_ADT(pid, file_count);
     int res = 0;
-    while(res != ';') {
+    while(res != EOF) {
         res = print_result(result_ADT);
     }
 

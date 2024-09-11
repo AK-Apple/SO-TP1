@@ -47,11 +47,9 @@ int main(int argc, char *argv[]) {
     // printf("slaves_count = %d\nfiles_per_slave = %d\n", slaves_count, files_per_slave);
     
     pid_t pid = getpid();
-    ResultADT result_ADT = new_result_ADT(pid);
-    printf("%d\n", pid);
-
-    const char *result_file_name = "result.txt";
-    int result_fd = open(result_file_name, (O_RDWR | O_CREAT | O_TRUNC), S_IRWXU);
+    ResultADT result_ADT = new_result_ADT(pid, files_amount);
+    printf("%d %d\n", pid, files_amount);
+    sleep(VIEW_SLEEP);
 
 
     PipeGroupADT pipe_group = new_pipe_group(slaves_count);
@@ -59,7 +57,7 @@ int main(int argc, char *argv[]) {
     // 2. Forks
     pid_t children_pid[MAX_SLAVES_COUNT] = {0}; 
     for(int i = 0; i < slaves_count; i++) { 
-        const char *slave_name = "slave";    //TODO: reemplazar por el slave posta
+        char *slave_name = "slave";    
         char * const param_list[2] = {slave_name, NULL};
         pid_t child_pid = fork();
         if(child_pid == -1) {
@@ -88,8 +86,8 @@ int main(int argc, char *argv[]) {
     //    canal para enviar cosas al slave:    write_pipefd[i][1]
 
     char message[100];  //de última lo alargamos
-    int slave_it = 0;
-    int file_limit = ((argc-1)*INIT_DISTRIB)/100;
+    // int slave_it = 0;
+    // int file_limit = ((argc-1)*INIT_DISTRIB)/100;
     int local_to_read[MAX_SLAVES_COUNT] = {0};
 
 
@@ -125,12 +123,7 @@ int main(int argc, char *argv[]) {
             ssize_t bytes_read = read_pipe_pair(pipe_group, i, buffer);
             buffer[bytes_read] = '\0';
 
-            // Start Javi //
             write_result(result_ADT, buffer);
-            write(result_fd, buffer, strlen(buffer));
-
-            // End Javi //
-
 
             int files_this_iteration = instances_of_char(buffer, '\n');
             read_files+= files_this_iteration;
@@ -165,8 +158,6 @@ int main(int argc, char *argv[]) {
         waitpid(children_pid[i], NULL, 0);
     }
 
-
-    close(result_fd);
     free_result_ADT(result_ADT);
     // puts("md5 application terminated successfully");
     // printf("random child_pid to avoid warning: %d\n", children_pid[0]);
