@@ -11,12 +11,10 @@
 #define MAX_BUF_SIZE 1024
 #define TRUE 1
 
-void getMD5(const char *file_name, char *md5_sum);
+void getMD5(const char* file_name, char* md5_sum);
 
-int main()
-{
+int main() {
     int pid = getpid();
-    printf("slave no: %d\n", pid);
 
     char md5[MD5_LENGTH];
 
@@ -30,11 +28,9 @@ int main()
         }
            
         input[count] = '\0';
-        printf("input: %s\n", input);
 
         char* token = strtok(input, "\n");
-        while (token != NULL) {
-            printf("entered strtok\n");
+        while(token != NULL) {
             getMD5(token, md5);
 
             char buff[MAX_BUF_SIZE];
@@ -47,17 +43,16 @@ int main()
     }
 }
 
-void getMD5(const char *file_name, char *md5_sum)
-{
+void getMD5(const char* file_name, char* md5_sum) {
     char cmd[MAX_BUF_SIZE + strlen(file_name)];
     int count = sprintf(cmd, "md5sum %s 2>/dev/null", file_name);
 
-    FILE * p = popen(cmd, "r");
+    FILE* p = popen(cmd, "r");
 
-    if (p == NULL) return;
+    if(p == NULL) return;
 
     char c;
-    for (int i = 0; i < count && isxdigit(c = fgetc(p)); i++) {
+    for(int i = 0; i < count && isxdigit(c = fgetc(p)); i++) {
         *md5_sum++ = c;
     }
 
