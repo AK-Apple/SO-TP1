@@ -2,10 +2,11 @@
 md5
 vista
 slave
-junior_slave
-PipeGroupTest
 *.out
 result/*
+
+# creados por el programa mismo
+md5_result.txt
 
 # creados por programas de uso personal
 .bash_history
@@ -14,11 +15,6 @@ result/*
 .idea
 .git_history
 .idea
-
-personal.c
-
-# creados por el programa mismo
-result.txt
 
 # PVS
 report.tasks

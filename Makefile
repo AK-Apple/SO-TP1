@@ -1,11 +1,11 @@
-LINKEDITABLE = PipeGroupADT.c
+LINKEDITABLE = PipeGroupADT.c ResultADT.c
 
-PARAMS = -Wall -std=c99 -lrt -pthread -g 
+PARAMS = -Wall -std=c99 -lrt -lpthread -g 
 
-all: vista slave junior_slave PipeGroupTest
+all: vista slave md5
 
-# md5: md5.c
-# gcc $(PARAMS) $< -o $@
+md5: md5.c
+	gcc $(PARAMS) $(LINKEDITABLE) $< -o $@
 
 vista: vista.c
 	gcc $(PARAMS) ResultADT.c $< -o $@
@@ -13,19 +13,7 @@ vista: vista.c
 slave: slave.c
 	gcc $(PARAMS) $< -o $@
 
-junior_slave: junior_slave.c
-	gcc $(PARAMS) $< -o $@ 
-
-PipeGroupTest: PipeGroupTest.c
-	gcc $(PARAMS) ResultADT.c $< -o $@
-
-
 clean:
-	rm -f md5 vista slave junior_slave PipeGroupTest result.txt
+	rm -f md5 vista slave md5_result.txt
 
 .PHONY: all clean
-
-# uso -std=c99 y -pthread porque a mí no me compilaban algunos archivos
-
-# TODO: por alguna razón misteriosa, los LINKEDITABLE se linkeditan solos
-# TODO: sacar los archivos extra del .gitignore

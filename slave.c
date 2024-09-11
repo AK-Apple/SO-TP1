@@ -20,17 +20,16 @@ int main()
 
     char md5[MD5_LENGTH];
 
-    while (TRUE) {
-
+    while(TRUE) {
         char input[MAX_BUF_SIZE];
-        size_t count = 0;
-        count = read(STDIN_FILENO, &input, MAX_BUF_SIZE);
+        ssize_t count = 0;
+        count = read(STDIN_FILENO, &input, MAX_BUF_SIZE - 1);
 
-        if (count == 0 || input[0] == EOF){
-             exit(0);
+        if(count <= 0 || input[0] == (char)EOF) {
+            exit(0);
         }
            
-        input[count-1] = '\0';
+        input[count] = '\0';
         printf("input: %s\n", input);
 
         char* token = strtok(input, "\n");

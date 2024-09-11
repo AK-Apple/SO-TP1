@@ -11,9 +11,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#define ERROR_EXIT(msg)    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-
-typedef struct ResultCDT *ResultADT;
+typedef struct ResultCDT* ResultADT;
 
 
 ResultADT new_result_ADT(pid_t pid, int file_count);
@@ -26,6 +24,6 @@ void free_result_ADT(ResultADT result_ADT);
 
 int print_result(ResultADT result_ADT);
 
-void write_result(ResultADT result_ADT, char *result);
+void write_result(ResultADT result_ADT, char* result);
 
 #endif
