@@ -15,7 +15,8 @@ main(int argc, char *argv[])
         file_count = atoi(argv[2]); 
     }
     else {
-        printf("Expected 3 or 1 arguments but got %d\n%s <master_pid> <file_count>", argc, argv[0]);
+        printf("Expected 3 or 1 arguments but got %d\n%s <master_pid> <file_count>\n", argc, argv[0]);
+        exit(EXIT_FAILURE);
     }
 
     ResultADT result_ADT = open_result_ADT(pid, file_count);
