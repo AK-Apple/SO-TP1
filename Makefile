@@ -1,6 +1,6 @@
 LINKEDITABLE = pipe_group_adt.c result_adt.c
 
-PARAMS = -Wall -std=gnu11 -lrt -lpthread -g -fsanitize=address
+PARAMS = -Wall -std=gnu11 -lrt -lpthread -g
 
 all: vista slave md5
 

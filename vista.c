@@ -8,11 +8,11 @@ int main(int argc, char* argv[]) {
     int file_count = 1;
     if (argc == 1) {
         int result = scanf("%d %d", &pid, &file_count);
-        if(result != 2) {
+        if (result != 2) {
             ERROR_EXIT("invalid input, expected <master_pid> <file_count> from stdin");
         }
     }
-    else if(argc == 3) {
+    else if (argc == 3) {
         pid = atoi(argv[1]);
         file_count = atoi(argv[2]); 
     }
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
 
     ResultADT result_adt = open_result_adt(pid, file_count);
     int res = 0;
-    for(int i = 0; res != EOF && i < file_count; i++) {
+    for (int i = 0; res != EOF && i < file_count; i++) {
         res = print_result_adt(result_adt);
     }
 

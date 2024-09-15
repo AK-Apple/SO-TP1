@@ -34,18 +34,18 @@ PipeGroupADT new_pipe_group(int size) {
     group->write_pipes = (int**)malloc(size * sizeof(int*));
     CHECK_NULL(group->write_pipes);
 
-    for(int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
         group->read_pipes[i] = (int*)malloc(2 * sizeof(int));
         CHECK_NULL(group->read_pipes[i]);
         group->write_pipes[i] = (int*)malloc(2 * sizeof(int));
         CHECK_NULL(group->write_pipes[i]);
 
-        if(pipe(group->write_pipes[i]) == -1 || pipe(group->read_pipes[i]) == -1) {
+        if (pipe(group->write_pipes[i]) == -1 || pipe(group->read_pipes[i]) == -1) {
             perror("pipe");
             exit(EXIT_FAILURE);
         }
-
     }
+
     return group;
 }
 
@@ -54,19 +54,19 @@ void select_readable(PipeGroupADT group, int* selected) {
     fd_set read_set;
     FD_ZERO(&read_set);
     int max_fd = 0;
-    for(int i = 0; i < group->size; i++) {
+    for (int i = 0; i < group->size; i++) {
         FD_SET(group->read_pipes[i][0], &read_set);
-        if(group->read_pipes[i][0] > max_fd) {
+        if (group->read_pipes[i][0] > max_fd) {
             max_fd = group->read_pipes[i][0];
         }
     }
 
-    struct timeval read_timeout = {0, READ_TIMEOUT_NS}; 
+    struct timeval read_timeout = {0, READ_TIMEOUT_NS};
     int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, &read_timeout);
-    
+
     int j = 0;
-    for(int i = 0; i < group->size && readable_pipes > 0; i++) {
-        if(FD_ISSET(group->read_pipes[i][0], &read_set)) {
+    for (int i = 0; i < group->size && readable_pipes > 0; i++) {
+        if (FD_ISSET(group->read_pipes[i][0], &read_set)) {
             selected[j] = i;
             j++;
             readable_pipes--;
@@ -85,8 +85,8 @@ void choose_pipe_pair(PipeGroupADT group, int i) {
     dup2(group->read_pipes[i][1], STDOUT_FILENO);
     close(group->read_pipes[i][1]);
 
-    for(int j = 0; j < group->size; j++) {
-        if(j != i) {
+    for (int j = 0; j < group->size; j++) {
+        if (j != i) {
             close(group->write_pipes[j][0]);
             close(group->write_pipes[j][1]);
         }
@@ -108,7 +108,7 @@ ssize_t read_pipe_pair(PipeGroupADT group, int i, char* buffer) {
 void close_pipes(PipeGroupADT group) {
     char end_of_file[2] = {EOF, 0};
 
-    for(int i = 0; i < group->size; i++) {
+    for (int i = 0; i < group->size; i++) {
         write_pipe_pair(group, i, end_of_file);
 
         close(group->read_pipes[i][0]);

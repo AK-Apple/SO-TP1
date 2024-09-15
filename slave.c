@@ -16,19 +16,19 @@ int main() {
     int pid = getpid();
     char md5[MD5_LENGTH] = {0};
 
-    while(TRUE) {
+    while (TRUE) {
         char input[MAX_BUF_SIZE] = {0};
         ssize_t count = 0;
         count = read(STDIN_FILENO, &input, MAX_BUF_SIZE - 1);
 
-        if(count <= 0 || input[0] == (char)EOF) {
+        if (count <= 0 || input[0] == (char)EOF) {
             exit(0);
         }
-           
+
         input[count] = '\0';
 
         char* token = strtok(input, "\n");
-        while(token != NULL) {
+        while (token != NULL) {
             get_md5(token, md5);
 
             char message_buffer[MAX_BUF_SIZE] = {0};
@@ -45,9 +45,9 @@ static void get_md5(const char* file_name, char* md5_sum) {
     snprintf(cmd, MAX_BUF_SIZE, "md5sum %s 2>/dev/null", file_name);
 
     FILE* md5_output_pipe = popen(cmd, "r");
-    if(md5_output_pipe == NULL) return;
+    if (md5_output_pipe == NULL) return;
 
-    while(isxdigit(*md5_sum++ = fgetc(md5_output_pipe)));
+    while (isxdigit(*md5_sum++ = fgetc(md5_output_pipe)));
     *md5_sum = '\0';
 
     pclose(md5_output_pipe);
