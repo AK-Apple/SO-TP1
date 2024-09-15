@@ -7,10 +7,10 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/select.h>
-#include "PipeGroupADT.h"
+#include "pipe_group_adt.h"
 #include "error_handling.h"
 
-#define BUF_SIZE 1024
+#define MESSAGE_SIZE 1024
 #define READ_TIMEOUT_NS 100000
 
 
@@ -85,8 +85,6 @@ void choose_pipe_pair(PipeGroupADT group, int i) {
     dup2(group->read_pipes[i][1], STDOUT_FILENO);
     close(group->read_pipes[i][1]);
 
-
-
     for(int j = 0; j < group->size; j++) {
         if(j != i) {
             close(group->write_pipes[j][0]);
@@ -97,11 +95,13 @@ void choose_pipe_pair(PipeGroupADT group, int i) {
 
 
 ssize_t write_pipe_pair(PipeGroupADT group, int i, char* str) {
-    return write(group->write_pipes[i][1], str, strlen(str));
+    char message[MESSAGE_SIZE] = {0};
+    int len = snprintf(message, MESSAGE_SIZE, "%s\n", str);
+    return write(group->write_pipes[i][1], message, len);
 }
 
 ssize_t read_pipe_pair(PipeGroupADT group, int i, char* buffer) {
-    return read(group->read_pipes[i][0], buffer, BUF_SIZE);
+    return read(group->read_pipes[i][0], buffer, MESSAGE_SIZE);
 }
 
 

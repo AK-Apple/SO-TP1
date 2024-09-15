@@ -7,19 +7,17 @@
 #include <string.h>
 
 #define MD5_LENGTH 256
-#define CMD_LENGTH 32
 #define MAX_BUF_SIZE 1024
 #define TRUE 1
 
-void getMD5(const char* file_name, char* md5_sum);
+static void get_md5(const char* file_name, char* md5_sum);
 
 int main() {
     int pid = getpid();
-
-    char md5[MD5_LENGTH];
+    char md5[MD5_LENGTH] = {0};
 
     while(TRUE) {
-        char input[MAX_BUF_SIZE];
+        char input[MAX_BUF_SIZE] = {0};
         ssize_t count = 0;
         count = read(STDIN_FILENO, &input, MAX_BUF_SIZE - 1);
 
@@ -31,31 +29,26 @@ int main() {
 
         char* token = strtok(input, "\n");
         while(token != NULL) {
-            getMD5(token, md5);
+            get_md5(token, md5);
 
-            char buff[MAX_BUF_SIZE];
-            count = snprintf(buff, MAX_BUF_SIZE, "%s %s %d\n", token, md5, pid);
-            write(STDOUT_FILENO, buff, count);
+            char message_buffer[MAX_BUF_SIZE] = {0};
+            count = snprintf(message_buffer, MAX_BUF_SIZE, "%s %s %d\n", token, md5, pid);
+            write(STDOUT_FILENO, message_buffer, count);
 
             token = strtok(NULL, "\n");
         }
-
     }
 }
 
-void getMD5(const char* file_name, char* md5_sum) {
-    char cmd[MAX_BUF_SIZE + strlen(file_name)];
-    int count = sprintf(cmd, "md5sum %s 2>/dev/null", file_name);
+static void get_md5(const char* file_name, char* md5_sum) {
+    char cmd[MAX_BUF_SIZE] = {0};
+    snprintf(cmd, MAX_BUF_SIZE, "md5sum %s 2>/dev/null", file_name);
 
-    FILE* p = popen(cmd, "r");
+    FILE* md5_output_pipe = popen(cmd, "r");
+    if(md5_output_pipe == NULL) return;
 
-    if(p == NULL) return;
-
-    char c;
-    for(int i = 0; i < count && isxdigit(c = fgetc(p)); i++) {
-        *md5_sum++ = c;
-    }
-
+    while(isxdigit(*md5_sum++ = fgetc(md5_output_pipe)));
     *md5_sum = '\0';
-    pclose(p);
+
+    pclose(md5_output_pipe);
 }

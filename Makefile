@@ -1,6 +1,6 @@
-LINKEDITABLE = PipeGroupADT.c ResultADT.c
+LINKEDITABLE = pipe_group_adt.c result_adt.c
 
-PARAMS = -Wall -std=c99 -lrt -lpthread -g 
+PARAMS = -Wall -std=gnu11 -lrt -lpthread -g -fsanitize=address
 
 all: vista slave md5
 
@@ -8,7 +8,7 @@ md5: md5.c
 	gcc $(PARAMS) $(LINKEDITABLE) $< -o $@
 
 vista: vista.c
-	gcc $(PARAMS) ResultADT.c $< -o $@
+	gcc $(PARAMS) result_adt.c $< -o $@
 
 slave: slave.c
 	gcc $(PARAMS) $< -o $@

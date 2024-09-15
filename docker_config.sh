@@ -15,3 +15,5 @@ cd root
 
 # para debugear:
 # strace -f -e write ./md5 files/*
+
+# docker run -v "${PWD}:/root" --privileged -ti agodio/itba-so-multi-platform:3.0

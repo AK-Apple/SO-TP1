@@ -1,6 +1,7 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
-#include "ResultADT.h"
+#include "result_adt.h"
+#include "error_handling.h"
 
 int main(int argc, char* argv[]) {
     int pid = 0;
@@ -8,8 +9,7 @@ int main(int argc, char* argv[]) {
     if (argc == 1) {
         int result = scanf("%d %d", &pid, &file_count);
         if(result != 2) {
-            fprintf(stderr, "invalid input, expected <master_pid> <file_count>\n");
-            exit(EXIT_FAILURE);
+            ERROR_EXIT("invalid input, expected <master_pid> <file_count> from stdin");
         }
     }
     else if(argc == 3) {
@@ -17,16 +17,15 @@ int main(int argc, char* argv[]) {
         file_count = atoi(argv[2]); 
     }
     else {
-        fprintf(stderr, "Expected 3 or 1 arguments but got %d\n%s <master_pid> <file_count>\n", argc, argv[0]);
-        exit(EXIT_FAILURE);
+        ERROR_EXIT("Expected 3 or 1 arguments but got \nusage: ./vista <master_pid> <file_count>");
     }
 
-    ResultADT result_ADT = open_result_ADT(pid, file_count);
+    ResultADT result_adt = open_result_adt(pid, file_count);
     int res = 0;
-    while(res != EOF) {
-        res = print_result(result_ADT);
+    for(int i = 0; res != EOF && i < file_count; i++) {
+        res = print_result_adt(result_adt);
     }
 
-    close_result_ADT(result_ADT);
+    close_result_adt(result_adt);
     exit(EXIT_SUCCESS);
 }
