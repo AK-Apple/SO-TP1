@@ -11,8 +11,6 @@
 #include "error_handling.h"
 
 #define MESSAGE_SIZE 1024
-#define READ_TIMEOUT_NS 100000
-
 
 
 typedef struct PipeGroupCDT {
@@ -61,8 +59,7 @@ void select_readable(PipeGroupADT group, int* selected) {
         }
     }
 
-    struct timeval read_timeout = {0, READ_TIMEOUT_NS};
-    int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, &read_timeout);
+    int readable_pipes = select(max_fd + 1, &read_set, NULL, NULL, NULL);
 
     int j = 0;
     for (int i = 0; i < group->size && readable_pipes > 0; i++) {

@@ -16,7 +16,11 @@ md5_result.txt
 .git_history
 .idea
 
+docker_config.sh
+files
+
 # PVS
+PVS_helper.sh
 report.tasks
 PVS-Studio.log
 strace_out
