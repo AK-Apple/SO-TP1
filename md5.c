@@ -20,7 +20,7 @@
 #define MAX_SLAVES_COUNT 20
 #define MESSAGE_MAX_SIZE 256
 #define RESULT_BUFFER_SIZE 4096
-#define VIEW_SLEEP 6
+#define VIEW_SLEEP 2
 #define SLAVE_NAME "slave"
 
 static int instances_of_char(char* str, char c);
